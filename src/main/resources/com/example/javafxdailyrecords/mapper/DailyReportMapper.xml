@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.javafxdailyrecords.mapper.DailyReportMapper">
+
+    <select id="selectByPage" resultType="com.example.javafxdailyrecords.entity.DailyReport">
+        SELECT id, user_id, report_date, week, content, remark, create_time, update_time
+        FROM daily_report
+        ORDER BY report_date DESC
+            LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="selectTotalCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM daily_report
+    </select>
+
+</mapper>

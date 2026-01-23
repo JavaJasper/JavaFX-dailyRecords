@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.ButtonBar.ButtonData?>
+
+<!-- 注意：DialogPane的控制器必须绑定ReportEditController -->
+<DialogPane xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.javafxdailyrecords.controller.ReportEditController"
+            style="-fx-font-family: 'Microsoft YaHei';">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    <content>
+        <VBox spacing="15" prefWidth="500" prefHeight="300">
+            <!-- 标题 -->
+<!--            <Label fx:id="dialogTitle" text="新增" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>-->
+
+            <!-- 日期选择 -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="日期：" style="-fx-font-size: 14px; -fx-min-width: 10px;"/>
+                <DatePicker fx:id="reportDatePicker" prefWidth="150" style="-fx-font-size: 14px;"/>
+            </HBox>
+
+            <Label text="星期：" fx:id="week" style="-fx-font-size: 14px;"/>
+
+            <!-- 工作内容 -->
+            <VBox spacing="5">
+                <Label text="工作内容：" style="-fx-font-size: 14px;"/>
+                <TextArea fx:id="contentTextArea" wrapText="true" prefRowCount="8"
+                          style="-fx-font-size: 14px;" VBox.vgrow="ALWAYS"
+                          promptText="请输入当日的工作内容..."/>
+            </VBox>
+
+            <!-- 备注 -->
+            <VBox spacing="5">
+                <Label text="备注（可选）：" style="-fx-font-size: 14px;"/>
+                <TextField fx:id="remarkTextField" promptText="输入备注信息" style="-fx-font-size: 14px;"/>
+            </VBox>
+        </VBox>
+    </content>
+    <buttonTypes>
+        <ButtonType fx:id="confirmBtn" text="确定" buttonData="OK_DONE"/>
+        <ButtonType text="取消" buttonData="CANCEL_CLOSE"/>
+    </buttonTypes>
+</DialogPane>
