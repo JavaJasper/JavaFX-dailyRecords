@@ -30,10 +30,13 @@ public class MainApplication extends Application {
         Parent root = loader.load();
 
         stage.setTitle("Daily Records");
-        stage.setScene(new Scene(root, 1200, 800));
+        Scene scene = new Scene(root, 1200, 800);
+        stage.setScene(scene);
         stage.setMinWidth(800);
         stage.setMinHeight(600);
         stage.show();
+        // 强制窗口布局刷新
+        scene.getRoot().requestLayout();
     }
 
     public void stop() {

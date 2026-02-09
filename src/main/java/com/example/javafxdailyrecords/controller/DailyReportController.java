@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 
 import java.net.URL;
 import java.net.URLEncoder;
@@ -58,6 +59,10 @@ public class DailyReportController {
     private Label totalPageLabel;
     @FXML
     private Label totalCountLabel;
+    @FXML
+    private ScrollPane tableScroll;
+    @FXML
+    private StackPane rootAnchor;
 
     private int currentPage = 1;
     private int pageSize = 7;
@@ -70,6 +75,21 @@ public class DailyReportController {
         if (Objects.isNull(reportMapper)) {
             throw new RuntimeException("获取DailyReportMapper失败，未注册到MybatisPlusMapperRegistry");
         } else {
+            // 延迟初始化tableScroll监听（解决空指针）
+            rootAnchor.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    // 绑定根容器到Scene大小
+                    rootAnchor.prefWidthProperty().bind(newScene.widthProperty());
+                    rootAnchor.prefHeightProperty().bind(newScene.heightProperty());
+
+                    // 初始化表格高度监听（此时tableScroll已注入完成）
+                    initTableHeightListener();
+
+                    // 强制刷新布局
+                    rootAnchor.requestLayout();
+                }
+            });
+
             initBasicStyles();
             initTableColumns();
             loadDailyReportByPage(currentPage, pageSize);
@@ -182,6 +202,8 @@ public class DailyReportController {
                         -fx-text-fill: #303133;
                         """);
                 textArea.setFocusTraversable(false);
+                // 文本区域宽度绑定单元格，解决缩放截断
+                textArea.prefWidthProperty().bind(this.widthProperty().subtract(10));
             }
 
             protected void updateItem(String item, boolean empty) {
@@ -230,62 +252,39 @@ public class DailyReportController {
             {
                 btnBox = new HBox(8, updateBtn, deleteBtn);
                 btnBox.setStyle("-fx-background-color: transparent; -fx-alignment: CENTER;");
+                // 提前禁用按钮焦点，避免样式异常
+                updateBtn.setFocusTraversable(false);
+                deleteBtn.setFocusTraversable(false);
             }
 
+            @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (!empty && getTableRow() != null && getTableRow().getItem() != null) {
-                    setGraphic(btnBox);
-                    setStyle("-fx-background-color: inherit;");
-                    DailyReport rowData = getTableRow().getItem();
-                    updateBtn.setOnAction((e) -> openEditDialog(rowData));
-                    deleteBtn.setOnAction((e) -> confirmDelete(rowData));
-                } else {
-                    setGraphic(null);
-                    setStyle("");
-                    setBackground(Background.EMPTY);
+                // 1、强制重置所有状态（核心！无论是否empty，先清空）
+                setGraphic(null);
+                setStyle("");
+                setBackground(Background.EMPTY);
+                // 清空事件绑定（避免复用导致的事件错乱）
+                updateBtn.setOnAction(null);
+                deleteBtn.setOnAction(null);
+                // 2、仅当非空且有数据时，重新绑定并显示
+                if (!empty) {
+                    TableRow<DailyReport> row = getTableRow();
+                    DailyReport rowData = row.getItem();
+                    // 双重校验：row和row.getItem()都不为null
+                    if (!Objects.isNull(row) && !Objects.isNull(rowData)) {
+                        // 重新绑定事件
+                        updateBtn.setOnAction((e) -> openEditDialog(rowData));
+                        deleteBtn.setOnAction((e) -> confirmDelete(rowData));
+                        // 显示按钮容器
+                        setGraphic(btnBox);
+                        // 继承行样式
+                        setStyle("-fx-background-color: inherit;");
+                    }
                 }
             }
         });
-        dailyReportTable.setRowFactory((tv) -> {
-            TableRow<DailyReport> row = new TableRow<>() {
-                protected void updateItem(DailyReport item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (!empty && item != null) {
-                        setPrefHeight(80);
-                        if (isSelected()) {
-                            setStyle("""
-                                    -fx-font-family: 'Microsoft YaHei';
-                                    -fx-font-size: 13px;
-                                    -fx-background-color: -fx-selection-bar;  // 显式使用系统选中色
-                                    -fx-text-fill: white; // 选中行文字变白，确保所有列内容可见
-                                    """);
-                        } else {
-                            setStyle(getIndex() % 2 == 0 ?
-                                    "-fx-background-color: #f8f9fa;\n-fx-font-family: 'Microsoft YaHei';\n-fx-font-size: 13px;\n" :
-                                    "-fx-background-color: white;\n-fx-font-family: 'Microsoft YaHei';\n-fx-font-size: 13px;\n");
-                        }
-                    } else {
-                        setStyle("");
-                        setBackground(Background.EMPTY);
-                        setPrefHeight(80);
-                    }
 
-                }
-            };
-            row.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal && !row.isEmpty()) {
-                    row.setStyle("""
-                            -fx-font-family: 'Microsoft YaHei';
-                            -fx-font-size: 13px;
-                            -fx-background-color: -fx-selection-bar;
-                            -fx-text-fill: white;
-                            """);
-                }
-
-            });
-            return row;
-        });
         dailyReportTable.setStyle("""
                 -fx-background-color: white;
                 -fx-border-color: #e6e6e6;
@@ -303,6 +302,70 @@ public class DailyReportController {
                     -fx-border-color: #e6e6e6;
                 }
                 """, StandardCharsets.UTF_8));
+    }
+
+    // 初始化表格高度监听（单独抽离，避免空指针）
+    private void initTableHeightListener() {
+        if (tableScroll != null && dailyReportTable != null) {
+            // 监听ScrollPane高度变化，适配表格高度
+            tableScroll.heightProperty().addListener((obs, oldVal, newVal) -> {
+                int dataCount = dailyReportTable.getItems() == null ? 0 : dailyReportTable.getItems().size();
+                double tableHeight = dataCount * 80 + 30; // 80=行高，30=表头高度
+                dailyReportTable.setPrefHeight(Math.min(tableHeight, newVal.doubleValue()));
+            });
+
+            // 初始设置表格高度
+            double initHeight = tableScroll.getHeight() > 0 ? tableScroll.getHeight() : 600;
+            dailyReportTable.setPrefHeight(initHeight);
+        }
+    }
+
+    private void resetTableRowFactory() {
+        dailyReportTable.setRowFactory((tv) -> {
+            TableRow<DailyReport> row = new TableRow<>() {
+                protected void updateItem(DailyReport item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (!empty && item != null) {
+                        setPrefHeight(80);
+                        if (isSelected()) {
+                            setStyle("""
+                                    -fx-font-family: 'Microsoft YaHei';
+                                    -fx-font-size: 13px;
+                                    -fx-background-color: -fx-selection-bar;  // 显式使用系统选中色
+                                    -fx-text-fill: white; // 选中行文字变白，确保所有列内容可见
+                                    """);
+                        } else {
+                            setStyle(getIndex() % 2 == 0 ? """
+                                    -fx-background-color: #f8f9fa;
+                                    -fx-font-family: 'Microsoft YaHei';
+                                    -fx-font-size: 13px;
+                                    """ :
+                                    """
+                                    -fx-background-color: white;
+                                    -fx-font-family: 'Microsoft YaHei';
+                                    -fx-font-size: 13px;
+                                    """);
+                        }
+                    } else {
+                        setStyle("");
+                        setBackground(Background.EMPTY);
+                        // 空行行高设为0，彻底隐藏
+                        setPrefHeight(0);
+                    }
+                }
+            };
+            row.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal && !row.isEmpty()) {
+                    row.setStyle("""
+                            -fx-font-family: 'Microsoft YaHei';
+                            -fx-font-size: 13px;
+                            -fx-background-color: -fx-selection-bar;
+                            -fx-text-fill: white;
+                            """);
+                }
+            });
+            return row;
+        });
     }
 
     private Button createStyledButton(String text, String normalColor, String hoverColor) {
@@ -352,6 +415,10 @@ public class DailyReportController {
             pageResult = dailyReportService.getDailyReportByPage(pageNum, pageSize);
             currentPage = pageResult.getPageNum();
             List<DailyReport> dataList = pageResult.getDataList();
+            // 1. 清空表格原有数据（避免复用残留）
+            dailyReportTable.getItems().clear();
+            // 2. 刷新行工厂 重置所有TableCell
+            resetTableRowFactory();
             dailyReportTable.setItems(FXCollections.observableArrayList(dataList));
             updatePageControls();
             logger.info(String.format("加载第%d页数据成功，共%d条，总记录数：%d", currentPage, dataList.size(), pageResult.getTotalCount()));

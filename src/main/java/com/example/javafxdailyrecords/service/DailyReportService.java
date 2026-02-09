@@ -31,7 +31,7 @@ public class DailyReportService {
         int offset = (pageNum - 1) * pageSize;
         List<DailyReport> dataList = dailyReportMapper.selectByPage(pageSize, offset);
         long totalCount = dailyReportMapper.selectTotalCount();
-        return new CustomPage(dataList, pageNum, pageSize, totalCount);
+        return new CustomPage<>(dataList, pageNum, pageSize, totalCount);
     }
 
     public boolean saveOrUpdateDailyReport(DailyReport report) {

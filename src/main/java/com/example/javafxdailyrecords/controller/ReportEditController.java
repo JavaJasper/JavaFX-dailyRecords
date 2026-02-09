@@ -91,7 +91,7 @@ public class ReportEditController {
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("输入错误");
-        alert.setHeaderText((String)null);
+        alert.setHeaderText(null);
         alert.setContentText(message);
         alert.getDialogPane().setMinHeight(Double.NEGATIVE_INFINITY);
         alert.showAndWait();
