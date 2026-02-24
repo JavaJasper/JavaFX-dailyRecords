@@ -1,5 +1,6 @@
 package com.example.javafxdailyrecords.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.javafxdailyrecords.config.MyBatisPlusConfig;
 import com.example.javafxdailyrecords.entity.DailyReport;
 import com.example.javafxdailyrecords.mapper.DailyReportMapper;
@@ -500,6 +501,11 @@ public class DailyReportController {
                 if (report == null) {
                     String chineseWeek = DateUtil.getChineseWeek(savedReport.getReportDate());
                     savedReport.setWeek(chineseWeek);
+                    DailyReport exist = reportMapper.selectOne(new LambdaQueryWrapper<DailyReport>().eq(DailyReport::getReportDate, savedReport.getReportDate()));
+                    if (!Objects.isNull(exist)) {
+                        showAlert(Alert.AlertType.ERROR, "操作失败", "该日期已有日报！");
+                        return;
+                    }
                     success = reportMapper.insert(savedReport) > 0;
                 } else {
                     savedReport.setId(report.getId());
