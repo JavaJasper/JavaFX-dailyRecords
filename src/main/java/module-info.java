@@ -13,6 +13,7 @@ module com.example.javafxdailyrecords {
     requires com.baomidou.mybatis.plus.core;
     requires com.baomidou.mybatis.plus.annotation;
 
+    requires org.kordamp.bootstrapfx.core;
 
     opens com.example.javafxdailyrecords to javafx.fxml;
     opens com.example.javafxdailyrecords.controller to javafx.fxml;

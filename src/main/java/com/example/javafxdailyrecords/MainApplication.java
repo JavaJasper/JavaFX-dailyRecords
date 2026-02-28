@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.kordamp.bootstrapfx.BootstrapFX;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +32,8 @@ public class MainApplication extends Application {
 
         stage.setTitle("Daily Records");
         Scene scene = new Scene(root, 1200, 800);
+        // 加载BootstrapFX样式库
+        scene.getStylesheets().add(BootstrapFX.bootstrapFXStylesheet());
         stage.setScene(scene);
         stage.setMinWidth(800);
         stage.setMinHeight(600);

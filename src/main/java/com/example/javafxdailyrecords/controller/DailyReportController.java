@@ -64,6 +64,8 @@ public class DailyReportController {
     private ScrollPane tableScroll;
     @FXML
     private StackPane rootAnchor;
+    @FXML
+    private Button testBtn;
 
     private int currentPage = 1;
     private int pageSize = 7;
@@ -101,6 +103,8 @@ public class DailyReportController {
     }
 
     private void initBasicStyles() {
+        // 测试BootstrapFX样式
+        testBtn.getStyleClass().add("btn-danger");
         addReportBtn.setOnMouseEntered((event) ->
                 addReportBtn.setStyle("""
                         -fx-background-color: #66b1ff;
